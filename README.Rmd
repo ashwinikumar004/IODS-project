@@ -1,0 +1,13 @@
+---
+title: "README"
+author: "Ashwini Kumar"
+date: "26 January 2017"
+output: html_document
+---
+
+# About the course
+
+OPEN DATA - OPEN SCIENCE - DATA SCIENCE. Our era of data - larger than ever and complex like chaos - requires several skills from statisticians and other data scientists. On this course, we use the learning platform for MOOCs (Massive Open Online Courses) of the University of Helsinki.
+
+# link to my course diary 
+https://ashwinikumar004.github.io/IODS-project/

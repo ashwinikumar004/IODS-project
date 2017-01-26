@@ -1,5 +1,6 @@
 ---
 title: "IODS course project"
+author: "Ashwini Kumar"
 output:
   html_document:
     theme: cosmo

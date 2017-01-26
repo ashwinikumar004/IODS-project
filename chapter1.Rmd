@@ -1,4 +1,18 @@
+---
+title: "Assignment 1 (IODS-project)"
+author: "Ashwini Kumar" 
+date: "26 January 2017"
+output: html_document
+---
 
 # About the project
 
-*Write a short description about the course and add a link to your github repository here. This is an R markdown (.Rmd) file so you can use R markdown syntax. See the 'Useful links' page in the mooc area (chapter 1) for instructions.*
+Introduction to Open Data Science, spring 2017 at University of Helsinki. During the course we are going to learn R and GitHub. 
+
+
+### Github repository 
+
+https://github.com/ashwinikumar004/IODS-project
+
+
+
