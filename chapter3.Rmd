@@ -4,7 +4,7 @@ author: "Ashwini Kumar"
 date: "9 February 2017"
 output: html_document
 ---
-
+# Logistic regression (RStudio Exercise 3)
 # Data
 ```{r}
 library(dplyr)
@@ -179,6 +179,19 @@ cv <- cv.glm(data = alc, cost = loss_func, glmfit = m3, K = 10)
 # average number of wrong predictions in the cross validation
 cv$delta[1]
 
+select(alc, failures, absences, sex, high_use, probability, prediction) %>% head(10)
+
+
+g <- ggplot(alc, aes(x = probability, y = high_use, col= prediction))
+g + geom_point()+ggtitle("Prediction vs true values probabilites")
+
 ```
+Cross-validation gives a good estimate of the actual predictive power of the model. It can also be used to compare different models or classification methods. Low value = good so it seems when we seclect only the significant varibles our moldel is more effective. 
+
+
+
+
+
+
 
 
