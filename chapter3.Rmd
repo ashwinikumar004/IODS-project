@@ -1,0 +1,184 @@
+---
+title: "Logistic regression (RStudio Exercise 3)"
+author: "Ashwini Kumar"
+date: "9 February 2017"
+output: html_document
+---
+
+# Data
+```{r}
+library(dplyr)
+alc <- read.table("http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/alc.txt", sep = ",", header = TRUE)
+glimpse(alc)
+```
+The data sets is retrieved from the UCI Machine Learning Repository. The data are from two identical questionaires related to secondary school student alcohol comsumption in Portugal. Here, we have 382 observations and 37 variables. The aim is to find out the effect of these 37 variables on the low/high alcohal consumption among students.   
+
+# Hypotheses
+Here are my four personal vriables those might have effect on the high/low alcohal consumption, we will find out this in the next steps.  
+
+1. sex: mostly male students have more alcohal consumption
+2. grade: it is most likely that if you have higher grades you don't have time to waste on drinking or you are more focused on studies
+3. age: older the age, probability to drink more 
+4. absences: students those are not interested in the studies and just want to enjoy outside of the school. We all know the drinking is one of the major part in the entertainment activities. So I think students those are away from school drink more alcohal.      
+
+# Explanations of each variable
+```{r}
+library(tidyr); library(dplyr); library(ggplot2)
+
+# produce summary statistics for sex, grades, high use and number of students
+alc %>% group_by(sex, high_use) %>% summarise(count = n())
+
+#  a plot of high_use vs sex 
+g1 <- ggplot(data = alc, aes(x = high_use, fill = sex))
+g1 + geom_bar() + facet_wrap("sex") + ggtitle("Student sex and alcohol consumption")
+
+```
+
+1. Sex: Based on the table it seems that out of 184 (113+71) male students 71 (62%) students have high use whereas in case of females only 41 (20%) students have high use of alcohal. Same results we can see in the bar plot "Student sex and alcohol consumption". My personal hypothesis is right in this case. 
+
+```{r}
+# a plot of high use vs grades 
+
+g2 <- ggplot(alc, aes(x = high_use, y = G3, col = sex))
+g2 + geom_boxplot() + ylab("grade") + ggtitle("Student grades by alcohol consumption and sex")
+
+```
+
+2. Grades: Alcohal consumption effects on the grades of only male students, we can observe this based on the box plot where grades of female students were uneffected and grades of male students are slightly going down with higher consumption of alcohal. My personal hypothesis is partially right in this case. 
+
+```{r}
+# a plot between high use and age
+g3 <- ggplot(data=alc, aes(x = high_use, y = age, col = sex))
+g3 + geom_jitter()  + ggtitle("Student age by alcohol consumption and sex")
+
+```
+
+3. Age: We can see that alcohal use is random by age. It seems that age does not have direct effect on the alcohal consumption, as all the students scattered randomly or in other words irrespective of their age.  
+
+```{r}
+# summary table
+alc %>% group_by(high_use) %>% summarise(count = n(), mean_absences=mean(absences))
+
+# box plot high use and absences
+g4 <- ggplot(alc, aes(x = high_use, y = absences))
+g4 + geom_boxplot() + ggtitle("Student by absences and alcohol consumption and sex")
+```
+4. Absences: From the table, we can see that students those were away from school had higher consumption of alcohal. Similarly, box plot shows that higher the absence leads to more consumption of alcohal.
+
+# Logistic regression and odds ratios
+
+```{r}
+
+# find the model with glm()
+m <- glm(high_use ~  G3 + age + absences + sex, data = alc, family = "binomial")
+# print out a summary of the model
+summary(m)
+
+# print out the coefficients of the model
+coef(m)
+
+# compute odds ratios (OR)
+OR <- coef(m) %>% exp
+OR
+# compute confidence intervals (CI)
+CI<- confint(m) %>% exp
+CI
+# print out the odds ratios with their confidence intervals
+cbind(OR, CI)
+
+
+```
+
+Out of 4 varialbles only sex and absences have significant effect with p-value < 0.01 on the alcohal consumption, however grades and age does not have significant effet. Grades has negative coefficient and age, absence and sex haev positive coefficient. Null deviance is 462.21 on 381 degrees of freedom which suggest that there is some overdispersion in the model. Odds ratio for absences is 1.07 with (1.03 to 1.11) confidence interval of 95%, which means that there is 1.03 higher risk to have high alcohol consumption when the number of absences are higher. There is 2.8 higher risk for males to have high alcohol consumption than females with (1.75 to 4.5) confidence interval of 95%. On the ohter hand age has odds ratio almost equal (1.14) to absences but the confidence interval (2.5%) is only 0.9, suggesting age doest not have impact on the drinking. In summary, for a male, the odds of being alcohal consumption is 2.8 times larger than the odds for a female alcohal consumption. Based on this study, perhaps alcohal cessation programs should be targeted toward men. 
+
+
+# Predictive power, training error and cross-validation
+Based on my results I am selecting only sex and absence as they had a statistical relationship with high/low alcohol consumption. 
+```{r}
+m1 <- glm(high_use ~  absences + sex, data = alc, family = "binomial")
+summary(m1)
+
+# predict() the probability of high_use
+probabilities <- predict(m1, type = "response")
+
+# add the predicted probabilities to 'alc'
+alc <- mutate(alc, probability = probabilities)
+
+# use the probabilities to make a prediction of high_use
+alc <- mutate(alc, prediction = probability > 0.5)
+
+# tabulate the target variable versus the predictions
+table(high_use = alc$high_use, prediction = alc$prediction)
+
+# access dplyr and ggplot2
+library(dplyr); library(ggplot2)
+
+# initialize a plot of 'high_use' versus 'probability' in 'alc'
+g <- ggplot(alc, aes(x = probability, y = high_use, col= prediction))
+g + geom_point()+ggtitle("Prediction vs true values probabilites")
+
+
+# tabulate the target variable versus the predictions
+table(high_use = alc$high_use, prediction = alc$prediction)
+table(high_use = alc$high_use, prediction = alc$prediction) %>% prop.table() %>% addmargins()
+
+
+# define a loss function (mean prediction error)
+loss_func <- function(class, prob) {
+  n_wrong <- abs(class - prob) > 0.5
+  mean(n_wrong)
+}
+
+# call loss_func to compute the average number of wrong predictions in the (training) data
+loss_func(class = alc$high_use, prob = alc$probability)
+
+```
+
+There were 0.68 probability for both predicted and observed to be false and 0.06 probability for both predicted and observed to be true. The probability to false positives were 0.018 and 0.23 probability for false negatives. 
+
+# Bonus
+```{r}
+loss_func(class = alc$high_use, prob = alc$probability)
+K = nrow(alc)
+
+# K-fold cross-validation
+library(boot)
+cv <- cv.glm(data = alc, cost = loss_func, glmfit = m1, K = 10)
+
+# average number of wrong predictions in the cross validation
+cv$delta[1]
+
+```
+My model is also having simillar error rate whcih is 0.25 as compared to the model introduced in DataCamp (which had about 0.26 error).
+
+
+
+# Super-Bonus
+
+Here, I selected 10 variables and found that only 4 variables have significant impact. 
+```{r}
+m2 <- glm(high_use ~  absences + sex + romantic + traveltime + age + studytime + failures + goout +  guardian  +  schoolsup , data = alc, family = "binomial")
+
+summary(m2)
+
+library(boot)
+cv <- cv.glm(data = alc, cost = loss_func, glmfit = m2, K = 10)
+
+# average number of wrong predictions in the cross validation
+cv$delta[1]
+
+```
+
+```{r}
+m3 <- glm(high_use ~  absences + sex  + traveltime +  goout  , data = alc, family = "binomial")
+summary(m3)
+
+library(boot)
+cv <- cv.glm(data = alc, cost = loss_func, glmfit = m3, K = 10)
+
+# average number of wrong predictions in the cross validation
+cv$delta[1]
+
+```
+
+
