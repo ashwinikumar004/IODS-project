@@ -31,3 +31,33 @@ human <- inner_join(hd, gii, by = "country")
 
 dim(human)
 write.csv(human, file = "/Users/ashkumar/Desktop/IODS-project/data/human.csv")
+
+#######################################################################################################################
+
+# Data Wrangling exercise for week 5
+human <- read.csv("/Users/ashkumar/Desktop/IODS-project/data/human.csv", header = TRUE)
+dim(human)
+library(stringr)
+str_replace(human$GNI, pattern=",", replace ="") %>% as.numeric
+
+# Selecting variables
+library(dplyr)
+keep_columns <- c("Country", "Secondary.Education.Ratio", "Labour.Force.Ratio", "Education.Expected", "Life.Expectancy", "GNI", "Maternal.Mortality", "Adolescent.Birth.Rate", "Parliamentary.Representation")
+human <- select(human, one_of(keep_columns))
+
+# Removing all rows with missing variables
+keep <- complete.cases(human)
+data.frame(human[-1], comp = keep)
+human <- filter(human, complete.cases(human))
+
+# Removing regions
+tail(human, n = 10)
+last <- nrow(human) - 7
+human <- human[1:last, ]
+
+# Defining row names
+rownames(human) <- human$country
+str(human) # The data has 155 observations of 9 variables
+
+# Replacing the old version of the dataset with the newly-wrangled one
+write.csv(human, file = "/Users/ashkumar/Desktop/IODS-project/data/human.csv", row.names = TRUE)
