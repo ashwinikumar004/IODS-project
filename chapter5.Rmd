@@ -5,7 +5,7 @@ date: "22 February 2017"
 output: html_document
 ---
 
-# data
+# Exercise 5 Dimensionality reduction techniques 
 ```{r}
 human <- read.csv("http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/human2.txt", header = TRUE)
 dim(human)
