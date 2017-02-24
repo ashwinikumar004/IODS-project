@@ -1,0 +1,92 @@
+---
+title: "Dimensionality reduction techniques"
+author: "Ashwini Kumar"
+date: "22 February 2017"
+output: html_document
+---
+
+# data
+```{r}
+human <- read.csv("http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/human2.txt", header = TRUE)
+dim(human)
+str(human)
+```
+The human dataset contains various indicators of the well-being of various countries. The summary shows, there are altogether 155 observations (i.e. countries) and these are the variables:
+* Edu2.FM: the ratio of females to males in secondary education
+* Labo.FM: the ratio of females to males in the labour force
+* Edu.Exp: expected number of years spent in schooling
+* Life.Exp: life expectancy in years
+* GNI: gross national income
+* Mat.Mor: the relativised number of mothers who die at child birth
+* Ado.Birth: the rate of teenage pregnancies leading to child birth
+* Parli.F: the percentage of female parliamentarians
+
+# Overview of the variables
+
+```{r}
+library(GGally)
+ggpairs(human)
+```
+
+All the variable have varying degrees of skewness. For example, maternal mortality is highly skewed so that the mean value is close to zero. By contrast, the expected number of years spent in schooling appears to be almost normally distributed. We may then see if the variables are correlated by creating a correlation matrix.
+
+```{r}
+library(dplyr)
+library(corrplot)
+cor(human) %>% corrplot(method="number")
+```
+Life expectancy and expected years spent in schooling (0.79) and Adolescent birth rate and maternal mortality on the one hand (0.76) have highest positive correlation. The strongest negative correlation is between maternal mortality and life expectancy (-0.86). Other strongly negative correlations obtain between maternal mortality and ratio of females to males in secondary education; maternal mortality and expected years spent in schooling; adolescent birthrate and expected years spent in schooling; as well as adolescent birthrate and life expectancy. However, the percentage of female parliamentarians and the ratio of females to males in the labour force are only weakly correlated with rest of the variables.
+
+# PCA on non-standardised data
+Let's plot a biplot on the non-standardised data
+```{r}
+pca_human <- prcomp(human)
+biplot(pca_human, choices = 1:2, cex = c(0.8, 1), col = c("grey40", "deeppink2"), sub = "PC1: GNI vs. the rest")
+```
+
+The biplot is not very informative as the PC1 is not really succeed in classyfying and explore the data. The only variable that is visible in the plot is the GNI. 
+
+# PCA on standardised data (scaling)
+
+```{r}
+human_scale <- scale(human)
+summary(human_scale)
+summary(human)
+```
+
+As compared to the orginal data summary function’s output shows, all variables now have zero as their mean. Let's try to plot PCA plot on this data. 
+
+```{r}
+pca_human_scale <- prcomp(human_scale)
+biplot(pca_human_scale, choices = 1:2, cex = c(0.8, 1), col = c("grey40", "deeppink2"), sub = "PCA2: Prosperity and equality")
+```
+As shown in the second PCA plot, variables associated clearly with PC1 and others with PC2.
+
+There are three broad groups in the second PCA analysis.
+* The first group consists of variables Edu.Exp, Edu2.FM, Life.Exp and GNI. They are all very closely aligned with negative values of PC1. A high score in these variables is associated with western countries. They display equality, well-being and prosperity.
+* The second group consists of variables Mat.Mor and Ado.Birth. They are also associated with PC1, but correlate positively with it and are thus diametrically opposite to the first group. They display a lack of basic healthcare.
+* The third group consists of variables Labo.FM and Parli.F. They are associated with PC2. Recall that these variables had little correlation with the others. They are related to formal gender equality, which, interestingly, may be fulfilled in both rich and poor countries.
+
+# MCA
+This is the tea dataset from the package FactoMineR.
+```{r}
+library(FactoMineR)
+data(tea)
+str(tea)
+```
+
+# column names to keep in the dataset
+
+```{r}
+keep_columns <- c("Tea", "How", "how", "sugar", "where", "lunch")
+tea_time <- dplyr::select(tea, one_of(keep_columns))
+mca <- MCA(tea_time, graph = FALSE)
+summary(mca)
+```
+
+# visualise the analysis
+```{r}
+library(tidyr); library(ggplot2)
+gather(tea_time) %>% ggplot(aes(value)) + facet_wrap("key", scales = "free") + geom_bar() + theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8))
+```
+These barplots show that tea drinking habit is highly variable among people. Sugar intake is more or less same. However people drink at mostly at chain stores using tea bags.
