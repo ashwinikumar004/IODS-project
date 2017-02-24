@@ -30,20 +30,22 @@ gii <- mutate(gii, labFMrat = labF / labM)
 human <- inner_join(hd, gii, by = "country")
 
 dim(human)
-write.csv(human, file = "/Users/ashkumar/Desktop/IODS-project/data/human.csv")
+write.csv(human, file = "/Users/ashkumar/Desktop/IODS-project/data/human.csv", row.names = F)
 
 #######################################################################################################################
 
 # Data Wrangling exercise for week 5
 human <- read.csv("/Users/ashkumar/Desktop/IODS-project/data/human.csv", header = TRUE)
+
 dim(human)
 library(stringr)
 str_replace(human$GNI, pattern=",", replace ="") %>% as.numeric
 
 # Selecting variables
 library(dplyr)
-keep_columns <- c("Country", "Secondary.Education.Ratio", "Labour.Force.Ratio", "Education.Expected", "Life.Expectancy", "GNI", "Maternal.Mortality", "Adolescent.Birth.Rate", "Parliamentary.Representation")
-human <- select(human, one_of(keep_columns))
+keep_columns <- c( "country", "edu2F", "labM", "expedu", "lifexxp", "GNI", "matmor", "adbi", "repparl")
+
+human <- dplyr::select(human, one_of(keep_columns))
 
 # Removing all rows with missing variables
 keep <- complete.cases(human)
@@ -57,7 +59,11 @@ human <- human[1:last, ]
 
 # Defining row names
 rownames(human) <- human$country
-str(human) # The data has 155 observations of 9 variables
 
+# remove the country col
+human$country <- NULL
+
+str(human) # The data has 155 observations of 8 variables
+dim(human)
 # Replacing the old version of the dataset with the newly-wrangled one
 write.csv(human, file = "/Users/ashkumar/Desktop/IODS-project/data/human.csv", row.names = TRUE)
